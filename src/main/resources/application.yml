@@ -1,0 +1,58 @@
+server:
+  port: 8081
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: kafka-example-consumer
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        generate_statistics: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/public
+    username: postgres
+    password: postgres
+  kafka:
+    schema:
+      registry:
+        urls: http://schema-registry-cp-schema-registry:8081
+    bootstrap-servers: localhost:29092
+    listener:
+      ack-mode: record
+    producer:
+      client-id: ${spring.application.name}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: ru.marmarks.consumer.config.DltMessageSerializer
+      retries: 3
+    consumer:
+      group-id: ${spring.application.name}
+      autoOffsetReset: earliest
+      # Сериализаторы для всех типов
+      keyDeserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      valueDeserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.value.default.type: org.apache.avro.generic.GenericRecord
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        specific:
+          avro:
+            reader: false
+#            Хранилище схем по умолчанию
+        schema:
+          registry:
+            url: http://schema-registry-cp-schema-registry:8081
+
+
+kafka:
+  topics:
+    personal-data: kafka-connect-personal_data
+  services:
+    personal-data: kafka-connect-personal_data
+
